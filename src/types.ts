@@ -17,3 +17,13 @@ export interface PhraseEntry {
   meaning: string;
   example: string;
 }
+
+export interface TranslationNote {
+  id: string;
+  original: string;
+  translation: string;
+  annotations: {
+    phrase: string;
+    explanation: string;
+  }[];
+}

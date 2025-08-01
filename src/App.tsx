@@ -6,6 +6,7 @@ import TranslationNotesApp from './TranslationNotes';
 const STORAGE_KEY = 'flashcards';
 
 export default function App() {
+  const [showPromptModal, setShowPromptModal] = useState(false);
   const [jsonInput, setJsonInput] = useState('');
   const [cards, setCards] = useState<Flashcard[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -128,7 +129,15 @@ export default function App() {
                 className="bg-indigo-600 text-white px-4 py-2 rounded"
               >
                 📚 対訳ノート
-              </button>           
+              </button>
+
+              <button
+                onClick={() => setShowPromptModal(true)}
+                className="bg-purple-700 text-white px-4 py-2 rounded"
+              >
+                💬 AI用プロンプトを見る
+              </button>
+
             </div>
           </>
         )}
@@ -334,7 +343,30 @@ export default function App() {
             />
 
           </>
-        )}        
+        )}
+
+        {showPromptModal && (
+          <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black bg-opacity-60 backdrop-blur-sm">
+            <div className="bg-white rounded-lg shadow-lg p-6 max-w-md w-full relative z-[1001]">
+              <h2 className="text-xl font-bold mb-2">ChatGPT用プロンプト</h2>
+              <p className="text-sm mb-3">以下をコピーしてChatGPTに貼り付けてください。</p>
+              <textarea
+                readOnly
+                value={`例:\n[{"expression":"...","meaning":"..."}]`}
+                className="w-full h-32 p-2 border rounded font-mono text-sm"
+              />
+              <div className="flex justify-end mt-4">
+                <button
+                  onClick={() => setShowPromptModal(false)}
+                  className="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700"
+                >
+                  閉じる
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+               
       </div>
     </div>
   );
