@@ -53,7 +53,7 @@ ${N}`).join(`
   以下の英文から、学習価値のある単語やフレーズを抽出してください。
   簡単すぎる語彙（例: book, pen, cat, run など）は含めないでください。
 
-  各項目は必ず practical（実用的・日常会話で使う語彙）または literary（文学的・表現的な語彙）のいずれかのカテゴリに分類してください。
+  各語彙は practical（実用的・日常会話でよく使う）または literary（文学的・特殊表現）に分類してください。
 
   抽出した各項目は必ず以下のJSON形式で出力してください。
   余計な説明やテキストは書かず、JSON配列のみを返してください。
@@ -66,7 +66,7 @@ ${N}`).join(`
       "part_of_speech": "string (品詞)",
       "example": "string (自然な英語例文)",
       "translation": "string (例文の自然な日本語訳)",
-      "category": "practical | literary"
+      "category": "practical" | "literary"
     }
   ]
 
