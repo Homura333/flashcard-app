@@ -1,4 +1,4 @@
-````markdown
+```markdown
 # 📑 英語フレーズ暗記カードアプリ 実装仕様書（開発者向け）
 
 ## 1. アプリ概要
@@ -11,7 +11,39 @@
 
 ---
 
-## 2. データ仕様
+## 2. ディレクトリ構成
+```
+
+src/
+├── App.tsx              # ルートコンポーネント
+├── main.tsx             # エントリーポイント
+├── components/
+│   ├── MenuView\.tsx     # メニュー画面
+│   ├── CardsView\.tsx    # カード表示画面
+│   ├── CardSingle.tsx   # 単体カード表示
+│   ├── CardList.tsx     # 一覧カード表示
+│   ├── CardControls.tsx # 単体表示の操作UI
+│   ├── ViewButtons.tsx  # ビュー切替UI
+│   ├── DeckManager.tsx  # デッキ管理UI
+│   ├── PromptView\.tsx   # プロンプト生成画面
+│   ├── PromptBlock.tsx  # プロンプトブロック表示
+│   ├── PromptModal.tsx  # プロンプト関連モーダル（補助機能）
+│   ├── TranslationNotes.tsx # 翻訳ノート表示（補助機能）
+│   ├── savePrompts.ts   # プロンプト保存ユーティリティ
+│   └── types.ts         # 型定義（Flashcard, Deck 等）
+├── hooks/
+│   └── useLocalStorage.ts # LocalStorage 永続化フック
+├── reducers/
+│   └── cardReducer.ts     # カード状態管理のReducer
+├── utils/
+│   └── cardUtils.ts       # カード操作ユーティリティ
+└── test/                  # 各コンポーネント/ユーティリティのテスト
+
+````
+
+---
+
+## 3. データ仕様
 
 ### Flashcard 型定義
 ```ts
@@ -48,123 +80,108 @@ export interface Flashcard {
 
 ---
 
-## 3. 画面仕様
+## 4. 画面仕様
 
-### 3-1. MenuView
+### 4-1. MenuView
 
-**機能**: デッキ管理、JSON入出力、画面遷移
+* **機能**: デッキ管理、JSON入出力、画面遷移
+* **補助コンポーネント**: `DeckManager`, `ViewButtons`
+* **イベント**:
 
-**UI要素**:
-
-* デッキ一覧（ドロップダウン or リスト）
-* JSON入力欄（textarea）
-* JSON読み込み／書き出しボタン
-* 「カード表示」ボタン
-* 「プロンプト生成」ボタン
-
-**主要処理**:
-
-* `onDeckSelect(deckId: string)`
-* `onDeckAdd(name: string)`
-* `onDeckRename(oldName: string, newName: string)`
-* `onDeckDelete(deckId: string)`
-* `onJsonImport()`
-* `onJsonExport(deckId: string)`
-* `onNavigate("cards" | "prompt")`
+  * `onDeckSelect(deckId)`
+  * `onDeckAdd(name)`
+  * `onDeckRename(oldName, newName)`
+  * `onDeckDelete(deckId)`
+  * `onJsonImport() / onJsonExport(deckId)`
+  * `onNavigate("cards" | "prompt")`
 
 ---
 
-### 3-2. CardsView
+### 4-2. CardsView
 
-**機能**: カード表示・編集・削除
+* **機能**: カード表示・編集・削除
+* **モード**: 単体表示（`CardSingle`）／一覧表示（`CardList`）
+* **補助コンポーネント**: `CardControls`, `ViewButtons`
+* **イベント**:
 
-**モード**:
-
-* 単体表示（CardSingle）
-* 一覧表示（CardList）
-
-**UI要素**:
-
-* ヘッダー（戻る／表示切替）
-* カード本体（表裏反転、例文表示）
-* 編集ボタン／削除ボタン
-* 進捗バー
-
-**主要処理**:
-
-* `onFlip()`
-* `onPrev() / onNext()`
-* `onToggle(idx: number)`
-* `onEditStart(idx: number, card: Flashcard)`
-* `onEditSave(idx: number, edited: Flashcard)`
-* `onEditCancel()`
-* `onDelete(idx: number)`
+  * `onFlip()`, `onPrev()`, `onNext()`
+  * `onToggle(idx)`
+  * `onEditStart(idx, card)`
+  * `onEditSave(idx, editedCard)`
+  * `onEditCancel()`
+  * `onDelete(idx)`
 
 ---
 
-### 3-3. PromptView
+### 4-3. PromptView
 
-**機能**: 文章を分割してプロンプト生成
+* **機能**: 文章分割 & プロンプト生成
+* **補助コンポーネント**: `PromptBlock`, `PromptModal`
+* **イベント**:
 
-**UI要素**:
-
-* 入力欄（textarea）
-* 自動分割ボタン
-* 編集エリア（黄色バー表示、D\&D操作可能）
-* プロンプト一覧（PromptBlock）
-* 保存ボタン
-
-**主要処理**:
-
-* `onTextChange(text: string)`
-* `onSplit(minWords?: number, maxWords?: number)`
-* `onDrop(e: DragEvent)`
-* `onGeneratePrompt(block: string)`
-* `onSave()`
+  * `onTextChange(text)`
+  * `onSplit(minWords?, maxWords?)`
+  * `onDrop(e: DragEvent)`
+  * `onGeneratePrompt(block)`
+  * `onSave()`
 
 ---
 
-## 4. 状態管理（React Hooks）
+### 4-4. TranslationNotes
+
+* **機能**: 学習用に翻訳メモを表示する補助機能
+* **仕様書未記載 → 今回追加**
+
+---
+
+## 5. 状態管理
 
 ### 共通
 
 ```ts
-const [view, setView] = useState<"menu" | "cards" | "prompt">("menu");
-const [decks, setDecks] = useState<string[]>([]);
-const [selectedDeck, setSelectedDeck] = useState<string | null>(null);
-const [cards, setCards] = useState<Flashcard[]>([]);
+view: "menu" | "cards" | "prompt"
+decks: string[]
+selectedDeck: string | null
+cards: Flashcard[]
 ```
 
 ### CardsView
 
 ```ts
-const [mode, setMode] = useState<"single" | "list">("single");
-const [currentIndex, setCurrentIndex] = useState<number>(0);
-const [flippedStates, setFlippedStates] = useState<boolean[]>([]);
-const [editingIndex, setEditingIndex] = useState<number | null>(null);
-const [editedCard, setEditedCard] = useState<Flashcard | null>(null);
+mode: "single" | "list"
+currentIndex: number
+flippedStates: boolean[]
+editingIndex: number | null
+editedCard: Flashcard | null
 ```
 
 ### PromptView
 
 ```ts
-const [text, setText] = useState<string>("");
-const [markers, setMarkers] = useState<number[]>([]);
-const [dragIndex, setDragIndex] = useState<number | null>(null);
+text: string
+markers: number[]
+dragIndex: number | null
 ```
 
+### Reducer
+
+* `cardReducer.ts`: カード追加／削除／編集を一元管理
+
+### Hook
+
+* `useLocalStorage.ts`: デッキ・カードをLocalStorageに永続化
+
 ---
 
-## 5. 共通ユーティリティ
+## 6. ユーティリティ
 
-* `sliceSentencesWithOffsets(text: string)` → 文末記号で分割
-* `splitBySentenceAndWordCount(text, min, max)` → 自然な文ブロック生成
-* `generateFlashcardPrompt(chunk: string)` → ChatGPT用プロンプト生成
-* `savePromptsToFile(data: any)` → JSON保存
+* `splitByWords.ts`: テキスト分割（文＋単語数）
+* `cardUtils.ts`: カード配列の検索・更新処理
+* `savePrompts.ts`: プロンプトをJSONとして保存
 
 ---
 
-## 6. 制約・補足
+## 7. 制約・補足
 
 * JSON必須項目（expression, meaning, example）が無い場合はエラー
 * デッキIDは重複不可
@@ -172,6 +189,17 @@ const [dragIndex, setDragIndex] = useState<number | null>(null);
 * 編集・削除は確認ダイアログを表示
 * 大量カード対応: 表示件数制限やスクロールでパフォーマンス確保
 
+---
+
+## 8. テスト
+
+* `test/` 以下に各コンポーネントとユーティリティの単体テストあり
+* 主に以下をカバー:
+
+  * デッキ操作（DeckManager.test.tsx）
+  * カード操作（CardList.test.tsx, CardSingle.test.tsx）
+  * 状態管理（cardReducer.test.ts）
+  * プロンプト生成（PromptView\.test.tsx, savePrompts.test.ts）
+  * LocalStorage処理（useLocalStorage.test.tsx）
+
 ```
-
-
